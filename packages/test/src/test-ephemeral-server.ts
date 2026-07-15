@@ -1,11 +1,14 @@
 import fs from 'fs/promises';
 import { randomUUID } from 'crypto';
+import os from 'os';
+import path from 'path';
 import type { ExecutionContext, TestFn } from 'ava';
 import anyTest from 'ava';
 import type { WorkflowBundle } from '@temporalio/worker';
 import { bundleWorkflowCode } from '@temporalio/worker';
 import { Connection } from '@temporalio/client';
 import { TestWorkflowEnvironment as RealTestWorkflowEnvironment } from '@temporalio/testing';
+import { createTestWorkflowEnvironment } from '@temporalio/test-helpers';
 import {
   Worker,
   TestWorkflowEnvironment,
@@ -78,6 +81,50 @@ testTimeSkipping('TestEnvironment sets up test server and is able to run a singl
 test('TestEnvironment sets up dev server and is able to run a single workflow', async (t) => {
   const testEnv = await TestWorkflowEnvironment.createLocal();
   await runSimpleWorkflow(t, testEnv);
+});
+
+test.serial('Shared test harness supports envconfig and legacy existing servers', async (t) => {
+  const namespace = 'envconfig-test';
+  const sourceEnv = await RealTestWorkflowEnvironment.createLocal({ server: { namespace } });
+  const originalTemporalEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([key, value]) => key.startsWith('TEMPORAL_') && value !== undefined)
+  ) as Record<string, string>;
+  let envconfigEnv: TestWorkflowEnvironment | undefined;
+  let legacyEnv: TestWorkflowEnvironment | undefined;
+
+  const setTemporalEnv = (values: Record<string, string>) => {
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith('TEMPORAL_')) delete process.env[key];
+    }
+    Object.assign(process.env, values);
+  };
+
+  try {
+    setTemporalEnv({
+      TEMPORAL_TEST_ENV_CONFIG_SERVER: 'true',
+      TEMPORAL_CONFIG_FILE: path.join(os.tmpdir(), `missing-temporal-config-${randomUUID()}.toml`),
+      TEMPORAL_ADDRESS: sourceEnv.address,
+      TEMPORAL_NAMESPACE: namespace,
+      TEMPORAL_GRPC_META_TEST_HEADER: 'envconfig-test',
+    });
+
+    envconfigEnv = await createTestWorkflowEnvironment();
+    t.is(envconfigEnv.address, sourceEnv.address);
+    t.is(envconfigEnv.namespace, namespace);
+    t.is(envconfigEnv.connectionOptions.metadata?.['test-header'], 'envconfig-test');
+    await runSimpleWorkflow(t, envconfigEnv);
+    envconfigEnv = undefined;
+
+    setTemporalEnv({ TEMPORAL_SERVICE_ADDRESS: sourceEnv.address });
+    legacyEnv = await createTestWorkflowEnvironment();
+    t.is(legacyEnv.address, sourceEnv.address);
+    await legacyEnv.connection.ensureConnected();
+  } finally {
+    await envconfigEnv?.teardown();
+    await legacyEnv?.teardown();
+    setTemporalEnv(originalTemporalEnv);
+    await sourceEnv.teardown();
+  }
 });
 
 test.todo('TestEnvironment sets up test server with extra args');

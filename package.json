@@ -26,7 +26,6 @@
     "build:watch": "pnpm run build:protos && tsc --build --watch packages/*/tsconfig.json",
     "build:protos": "tsx ./packages/proto/scripts/compile-proto.ts",
     "test": "pnpm --recursive --parallel --workspace-concurrency=1 --stream run test",
-    "test:external": "pnpm --dir packages/test run test:external",
     "test:watch": "pnpm --recursive --stream run test:watch",
     "ci-stress": "node ./packages/test/lib/load/run-all-stress-ci-scenarios.js",
     "ci-nightly": "node ./packages/test/lib/load/run-all-nightly-scenarios.js",

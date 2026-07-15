@@ -36,7 +36,7 @@ export type TimeSkippingTestWorkflowEnvironmentOptions = {
 type ExistingServerConnectionOptions = Pick<NativeConnectionOptions, 'apiKey' | 'metadata' | 'tls'>;
 
 /**
- * Options for {@link TestWorkflowEnvironment.createExistingServer}
+ * Options for {@link TestWorkflowEnvironment.createFromExistingServer}
  *
  * Accepts connection options that can be used for both the client and worker connections.
  */

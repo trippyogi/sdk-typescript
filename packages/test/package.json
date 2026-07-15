@@ -8,7 +8,6 @@
     "build:ts": "tsc --build",
     "build:protos": "tsx ./scripts/compile-proto.ts",
     "test": "ava ./lib/test-*.js",
-    "test:external": "ava ./lib/test-default-activity.js ./lib/test-integration-activities.js ./lib/test-integration-cancellation-scopes.js ./lib/test-integration-replay-and-flags.js ./lib/test-integration-reserved-prefixes.js ./lib/test-integration-update.js ./lib/test-integration-update-interceptors.js ./lib/test-integration-workflows-with-recorded-logs.js ./lib/test-isolation.js ./lib/test-nexus-operation-timeouts.js ./lib/test-nexus-signal-linking.js ./lib/test-nexus-standalone.js ./lib/test-nexus-temporal-operation.js ./lib/test-random-stream-reset.js ./lib/test-worker-tuner.js ./lib/test-workflow-async-local-storage.js ./lib/test-workflow-cancellation.js ./lib/test-workflow-fail-on-errors-policy.js ./lib/test-workflow-nexus-cancellation.js",
     "test:watch": "ava --watch ./lib/test-*.js",
     "test:bun": "bun run -b ava ./lib/test-*.js"
   },
